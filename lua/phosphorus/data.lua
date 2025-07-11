@@ -54,7 +54,7 @@ function data.load(base_dir)
     if not out_data or out_data == "" then
         phos_data = {
             base_dir = base_dir,
-            repositories = {}
+            repositories = {},
         }
         write_data(phosphorus_path_str, phos_data)
     else
@@ -80,7 +80,7 @@ function data.add_repo(repo_path)
 
     data._phos.repositories[repo_path] = true
     local repo_data = {
-        branches = { "main" }
+        branches = { "main" },
     }
     write_data(data_path_str .. "/phosphorus.json", data._phos)
     local user, _ = repo_path:match("^([^/]+)/(.+)$")
@@ -103,7 +103,7 @@ function data.delete_repo(repo_path)
     local user, _ = repo_path:match("^([^/]+)/(.+)$")
     Path:new(data_path_str .. "/" .. repo_path .. ".json"):rm()
     -- is there a way of doing this with plenary?
-    local user_files = vim.split(vim.fn.glob(user .. "/*"), '\n', { trimempty = true })
+    local user_files = vim.split(vim.fn.glob(user .. "/*"), "\n", { trimempty = true })
     if #user_files == 0 then
         Path:new(data_path_str .. "/" .. user):rmdir()
     end

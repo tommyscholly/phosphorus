@@ -21,7 +21,9 @@ local function setup(options)
         end,
     })
 
-    vim.api.nvim_create_user_command("PhosShow", function() ui.show() end, { nargs = 0 })
+    vim.api.nvim_create_user_command("PhosShow", function()
+        ui.show()
+    end, { nargs = 0 })
     vim.keymap.set("n", "<leader>ps", ":PhosShow<CR>", { desc = "phosphorus show" })
 end
 

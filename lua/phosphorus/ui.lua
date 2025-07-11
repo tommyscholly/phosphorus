@@ -22,7 +22,7 @@ local function repo_text()
             text = text .. "  " .. branch .. "\n"
             local branch_data = {
                 repo = repo,
-                branch = branch
+                branch = branch,
             }
             table.insert(repo_lines, branch_data)
         end

@@ -80,8 +80,10 @@ function git.cd_to_repo(repo_name, branch_name)
     if repo_path:exists() then
         vim.cmd(string.format("cd %s", full_repo_path_str))
     else
-        vim.notify(string.format("Repo %s does not exist, this is an error please report", repo_path_str),
-            vim.log.levels.ERROR)
+        vim.notify(
+            string.format("Repo %s does not exist, this is an error please report", repo_path_str),
+            vim.log.levels.ERROR
+        )
     end
 end
 
