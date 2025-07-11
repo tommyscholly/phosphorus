@@ -73,4 +73,16 @@ function git.delete_repo(repo_path_str)
     end
 end
 
+function git.cd_to_repo(repo_name, branch_name)
+    local repo_path_str = string.format("%s/%s", repo_name, branch_name)
+    local full_repo_path_str = string.format("%s/%s", data.base_dir(), repo_path_str)
+    local repo_path = Path:new(full_repo_path_str)
+    if repo_path:exists() then
+        vim.cmd(string.format("cd %s", full_repo_path_str))
+    else
+        vim.notify(string.format("Repo %s does not exist, this is an error please report", repo_path_str),
+            vim.log.levels.ERROR)
+    end
+end
+
 return git

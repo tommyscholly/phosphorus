@@ -102,10 +102,9 @@ function ui.show(saved_cursor)
 
                 local line_data = repo_lines[line_num]
                 if line_data then
-                    print("should open repo: " .. line_data.repo .. " branch: " .. line_data.branch)
-                else
-                    print("Line number: " .. line_num ..
-                        " Line content: " .. line_content)
+                    git.cd_to_repo(line_data.repo, line_data.branch)
+                    Snacks.notifier("opened " .. line_data.repo .. "/" .. line_data.branch, "info")
+                    layout_instance:close()
                 end
             end,
         },
