@@ -1,6 +1,5 @@
 ---@alias PhosOptions {base_dir: string}
 
-
 local ui = require("phosphorus.ui")
 local data = require("phosphorus.data")
 
