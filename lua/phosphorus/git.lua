@@ -87,4 +87,18 @@ function git.cd_to_repo(repo_name, branch_name)
     end
 end
 
+function git.add_branch(repo_name, branch_name)
+    git.cd_to_repo(repo_name, "main")
+
+    local cmd = { "git", "worktree", "add", "../" .. branch_name }
+
+    vim.fn.jobstart(cmd, {
+        on_exit = function(_, exit_code)
+            if exit_code ~= 0 then
+                vim.notify("Failed to add branch!", vim.log.levels.ERROR)
+            end
+        end,
+    })
+end
+
 return git

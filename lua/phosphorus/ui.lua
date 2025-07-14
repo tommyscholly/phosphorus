@@ -31,10 +31,20 @@ local function repo_text()
     return text, repo_lines
 end
 
-local ui = {}
+local ui = { lines = {} }
+
+function ui.rerender_text(self)
+    local text, repo_lines = repo_text()
+    ui.lines = repo_lines
+    local text_split = vim.split(text, "\n")
+    vim.api.nvim_set_option_value("modifiable", true, { buf = self.buf })
+    vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, text_split)
+    vim.api.nvim_set_option_value("modifiable", false, { buf = self.buf })
+end
 
 function ui.show(saved_cursor)
     local text, repo_lines = repo_text()
+    ui.lines = repo_lines
 
     local layout_instance
 
@@ -81,16 +91,36 @@ function ui.show(saved_cursor)
                 line_content = string.gsub(line_content, "%s+", "")
                 line_content = string.gsub(line_content, ":", "")
 
-                local line_data = repo_lines[line_num]
+                local line_data = ui.lines[line_num]
                 -- if line_data does not exist, then its a repo name, and we want to delete it
                 if not line_data then
                     git.delete_repo(line_content)
                     data.delete_repo(line_content)
-                    text, repo_lines = repo_text()
-                    local text_split = vim.split(text, "\n")
-                    vim.api.nvim_set_option_value("modifiable", true, { buf = self.buf })
-                    vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, text_split)
-                    vim.api.nvim_set_option_value("modifiable", false, { buf = self.buf })
+                    ui.rerender_text(self)
+                end
+            end,
+            b = function(self)
+                local cursor = vim.api.nvim_win_get_cursor(self.win)
+                local line_num = cursor[1]
+
+                local line_content = vim.api.nvim_buf_get_lines(self.buf, line_num - 1, line_num, false)[1]
+                line_content = string.gsub(line_content, "%s+", "")
+
+                local line_data = ui.lines[line_num]
+                -- if line_data does not exist, then its a repo name, and we want to delete it
+                if not line_data then
+                    local repo_name = string.gsub(line_content, ":", "")
+                    Snacks.input({ prompt = "enter a branch name" }, function(branch)
+                        if not branch then
+                            Snacks.notifier("did not enter a branch name", "error")
+                            return
+                        end
+
+                        git.add_branch(repo_name, branch)
+                        data.add_branch(repo_name, branch)
+                        ui.rerender_text(self)
+                        Snacks.notifier("added branch " .. branch, "info")
+                    end)
                 end
             end,
             ["<CR>"] = function(self)
@@ -100,7 +130,7 @@ function ui.show(saved_cursor)
                 local line_content = vim.api.nvim_buf_get_lines(self.buf, line_num - 1, line_num, false)[1]
                 line_content = string.gsub(line_content, "%s+", "")
 
-                local line_data = repo_lines[line_num]
+                local line_data = ui.lines[line_num]
                 if line_data then
                     git.cd_to_repo(line_data.repo, line_data.branch)
                     Snacks.notifier("opened " .. line_data.repo .. "/" .. line_data.branch, "info")
@@ -112,7 +142,7 @@ function ui.show(saved_cursor)
 
     local footer_win = Snacks.win({
         height = 1,
-        text = " a to Add Repo | d to Delete Repo | <CR> to Open | q to Quit ",
+        text = " a to Add Repo | d to Delete Repo/Branch | b to Branch | <CR> to Open | q to Quit ",
         wo = {
             spell = false,
             wrap = false,
