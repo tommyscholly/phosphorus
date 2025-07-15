@@ -161,20 +161,27 @@ function git.sync_worktree(repo_name)
     vim.cmd(string.format("cd %s", cwd))
 end
 
-function git.has_unsaved_changes(repo_name, branch_name)
+function git.unstaged_changes(repo_name, branch_name)
     local cwd = vim.fn.getcwd()
-    git.cd_to_repo(repo_name, "main")
+    git.cd_to_repo(repo_name, branch_name)
 
     local cmd = { "git", "status", "--porcelain" }
 
-    vim.fn.jobstart(cmd, {
-        stdout_buffered = true,
-        on_stdout = function(_, outdata)
-            local has_unsaved_changes = #outdata > 0
-            data.has_unsaved_changes(repo_name, branch_name, has_unsaved_changes)
-            vim.cmd(string.format("cd %s", cwd))
-        end
-    })
+    local out = vim.fn.system(cmd)
+    vim.cmd(string.format("cd %s", cwd))
+
+    -- vim.fn.jobstart(cmd, {
+    --     stdout_buffered = true,
+    --     on_stdout = function(_, outdata)
+    --         local has_unsaved_changes = #outdata > 0
+    --         data.has_unsaved_changes(repo_name, branch_name, has_unsaved_changes)
+    --         vim.cmd(string.format("cd %s", cwd))
+    --     end
+    -- })
+
+    vim.trim(out)
+    local changes = vim.split(out, "\n")
+    return #changes - 1
 end
 
 return git

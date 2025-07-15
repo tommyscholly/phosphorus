@@ -29,6 +29,10 @@ local function setup(options)
         ui.show()
     end, { nargs = 0 })
 
+    vim.api.nvim_create_user_command("PhosAddRepo", function()
+
+    end, { nargs = 0 })
+
     vim.keymap.set("n", "<leader>ps", ":PhosShow<CR>", { desc = "phosphorus show" })
 end
 
