@@ -29,7 +29,9 @@ end
 
 local data_path_str = string.format("%s/phosphorus", vim.fn.stdpath("data"))
 
-local data = {}
+local data = {
+    repo_data = {}
+}
 
 function data.load(base_dir)
     local base_dir_path = Path:new(base_dir)
@@ -66,8 +68,14 @@ end
 
 function data.load_repo_data(repo_path)
     local repo_data_path = string.format("%s/%s.json", data_path_str, repo_path)
-    local repo_data = Path:new(repo_data_path):read()
-    return vim.fn.json_decode(repo_data)
+    if data.repo_data[repo_path] ~= nil then
+        return data.repo_data[repo_path]
+    end
+
+    local repo_data_str = Path:new(repo_data_path):read()
+    local repo_data = vim.fn.json_decode(repo_data_str)
+    data.repo_data[repo_path] = repo_data
+    return repo_data
 end
 
 ---@param repo_path string - <user>/<repo>
@@ -107,6 +115,29 @@ function data.delete_repo(repo_path)
     if #user_files == 0 then
         Path:new(data_path_str .. "/" .. user):rmdir()
     end
+end
+
+--@alias WorktreeInfo {worktree: string, head: string, branch: string}
+--@alias Worktree {repo_name: string, worktrees: WorktreeInfo[]}
+
+--@param worktree Worktree
+function data.sync_worktree(worktree)
+    local repo_data = data.load_repo_data(worktree.repo)
+    if repo_data.worktrees == nil then
+        repo_data.worktrees = {}
+    end
+
+    for _, worktree_info in pairs(worktree.worktrees) do
+        local branch_name = worktree_info.branch
+        branch_name = branch_name:gsub("refs/heads/", "")
+        if not table.contains(repo_data.branches, branch_name) then
+            data.add_branch(worktree.repo, branch_name)
+        end
+        repo_data.worktrees[branch_name] = worktree_info
+    end
+
+    local path = data_path_str .. "/" .. worktree.repo .. ".json"
+    write_data(path, repo_data)
 end
 
 function data.base_dir()

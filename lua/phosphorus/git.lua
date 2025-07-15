@@ -101,4 +101,80 @@ function git.add_branch(repo_name, branch_name)
     })
 end
 
+--@returns WorktreeInfo[]
+local function lines_to_worktree_info(info)
+    local worktree_info = {}
+
+    while #info > 0 do
+        local branch_info = {}
+        local worktree_line = table.remove(info, 1)
+        local worktree_split = vim.split(worktree_line, " ")
+        if worktree_split[1] == "worktree" then
+            local worktree_path = worktree_split[2]
+            branch_info.worktree = worktree_path
+
+            local head_line = table.remove(info, 1)
+            local head_split = vim.split(head_line, " ")
+            if head_split[1] == "HEAD" then
+                local head_path = head_split[2]
+                branch_info.head = head_path
+            end
+
+            local branch_line = table.remove(info, 1)
+            local branch_split = vim.split(branch_line, " ")
+            if branch_split[1] == "branch" then
+                local branch_path = branch_split[2]
+                branch_info.branch = branch_path
+            end
+
+            table.insert(worktree_info, branch_info)
+        end
+    end
+
+    return worktree_info
+end
+
+
+function git.sync_worktree(repo_name)
+    local cwd = vim.fn.getcwd()
+    git.cd_to_repo(repo_name, "main")
+
+    local prune_cmd = { "git", "worktree", "prune" }
+    vim.fn.jobstart(prune_cmd)
+
+    local cmd = { "git", "worktree", "list", "--porcelain" }
+
+    local worktree = {
+        repo = repo_name,
+        worktrees = {},
+    }
+
+    vim.fn.jobstart(cmd, {
+        stdout_buffered = true,
+        on_stdout = function(_, outdata)
+            local worktree_info = lines_to_worktree_info(outdata)
+            worktree.worktrees = worktree_info
+            data.sync_worktree(worktree)
+        end
+    })
+
+    vim.cmd(string.format("cd %s", cwd))
+end
+
+function git.has_unsaved_changes(repo_name, branch_name)
+    local cwd = vim.fn.getcwd()
+    git.cd_to_repo(repo_name, "main")
+
+    local cmd = { "git", "status", "--porcelain" }
+
+    vim.fn.jobstart(cmd, {
+        stdout_buffered = true,
+        on_stdout = function(_, outdata)
+            local has_unsaved_changes = #outdata > 0
+            data.has_unsaved_changes(repo_name, branch_name, has_unsaved_changes)
+            vim.cmd(string.format("cd %s", cwd))
+        end
+    })
+end
+
 return git
