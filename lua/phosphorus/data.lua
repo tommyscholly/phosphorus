@@ -22,6 +22,16 @@ function table.contains(table, element)
     return false
 end
 
+function table.idx(table, element)
+    for idx, value in pairs(table) do
+        if value == element then
+            return idx
+        end
+    end
+
+    return nil
+end
+
 local function write_data(path_str, data)
     local path = Path:new(path_str)
     path:write(vim.fn.json_encode(data), "w")
@@ -114,6 +124,16 @@ function data.delete_repo(repo_path)
     local user_files = vim.split(vim.fn.glob(user .. "/*"), "\n", { trimempty = true })
     if #user_files == 0 then
         Path:new(data_path_str .. "/" .. user):rmdir()
+    end
+end
+
+function data.delete_branch(repo_path, branch_name)
+    local repo_data = data.load_repo_data(repo_path)
+    local idx = table.idx(repo_data.branches, branch_name)
+
+    if idx then
+        table.remove(repo_data.branches, idx)
+        write_data(data_path_str .. "/" .. repo_path .. ".json", repo_data)
     end
 end
 

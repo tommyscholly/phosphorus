@@ -30,10 +30,20 @@ local function setup(options)
     end, { nargs = 0 })
 
     vim.api.nvim_create_user_command("PhosAddRepo", function()
-
+        ui.add_repo()
     end, { nargs = 0 })
 
-    vim.keymap.set("n", "<leader>ps", ":PhosShow<CR>", { desc = "phosphorus show" })
+    vim.api.nvim_create_user_command("PhosAddBranch", function()
+        ui.add_branch()
+    end, { nargs = 0 })
+
+    vim.api.nvim_create_user_command("PhosDeleteRepo", function()
+        ui.delete_repo()
+    end, { nargs = 0 })
+
+    vim.api.nvim_create_user_command("PhosDeleteBranch", function()
+        ui.delete_branch()
+    end, { nargs = 0 })
 end
 
 return { setup = setup }
